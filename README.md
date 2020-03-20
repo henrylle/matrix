@@ -17,9 +17,18 @@ When we are working remotely there are no conversations like in a physical offic
 
 ![Matrix Home Screenshot](docs/img/matrix-morpheus.png)
 
+## Versions
+
+| Version | Name | Description | Docs |
+| --- | --- | --- | --- |
+| 2.0.0 | Seraph | New authentication | [Migration guide to 2.0.0](/docs/MIGRATION-TO-V2.md) |
+| 1.1.0 | Morpheus | New layout | [Pull request](https://github.com/ResultadosDigitais/matrix/pull/174) |
+| 1.0.0 | Neo | The one project | - |
+
+
 ## Authentication
 
-The login is so simple. You only need to create a google client id and configure the environment variable `GOOGLE_CREDENTIAL=xxxxxxxxxxx.apps.googleusercontent.com`. Follow [this step by step](/docs/GOOGLE-CREDENTIAL-STEP-BY-STEP.md) to configure your own google client key.
+The login is so simple. You only need to configure the Google API credentials following [this step by step](/docs/GOOGLE-CREDENTIAL-STEP-BY-STEP.md) .
 
 |                                 Login                                 |                                   Login in Dark Mode                                    |
 | :-------------------------------------------------------------------: | :-------------------------------------------------------------------------------------: |
@@ -37,6 +46,10 @@ The inside of **#matrix** there are some rooms. In this rooms is possible to see
 
 You can only enter in a room to show for the other that you are available there through the `ENTER ROOM` button or enter in a meeting through the button `ENTER MEETING`. 
 
+The embeded meet is provided by [meet.jit.si](https://meet.jit.si) service and this service is maintained by the [Jitsi team](https://jitsi.org/the-community/#meet-our-team)
+at [8x8](https://8x8.com). Access the [jitsi GitHub](https://github.com/jitsi/jitsi-meet#security) and learn more about this amazing video bridge service.     
+
+
 |                                Meeting Room                                |                                          With Sidebar                                           |
 | :------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------: |
 | <img src="docs/img/matrix-meet-room.png" title="Office page" width="100%"> | <img src="docs/img/matrix-meet-room-sidebar.png" title="Office page with Sidebar" width="100%"> |
@@ -45,50 +58,77 @@ You can only enter in a room to show for the other that you are available there 
 
 If you want run the **#matrix**, you need follow steps:
 
-1. We are using Google to authorizations, you need create a credential [here](/docs/GOOGLE-CREDENTIAL-STEP-BY-STEP.md) you can follow step by step
+1. Clone this repository `git clone git@github.com:ResultadosDigitais/matrix.git`
 
-2. Run application with docker compose:
+2. We are using Google to authorizations, you need create a credential [here](/docs/GOOGLE-CREDENTIAL-STEP-BY-STEP.md) you can follow step by step
+
+3. in the root create a file `variables.env`
+
+
+		GOOGLE_CLIENT_ID=000000000-xxxxxxxxxx.apps.googleusercontent.com
+		GOOGLE_SECRET=gXXXXXXXXXXXXss
+		GOOGLE_CALLBACK_URL=http://localhost:8080/auth/google/callback
+		COOKIE_SESSION_SECRET=matrix-session
+		COOKIE_SESSION_MAX_AGE=2592000000
+		ENFORCE_SSL=false
+		WHITELIST_DOMAINS="[]"
+
+
+4. Run application with docker compose:
 
 		$ docker-compose up
 
-3. Open your browser and access: 
+5. Open your browser and access: 
 
 		http://localhost:8080/
 
-4. When you finish, you can run:
+6. When you finish, you can run:
 
 		$ docker-compose down
 		
 
 ## On GCP 
+
 If you prefer, you can run **#matrix** on GCP:
 
 [![Run on Google Cloud](https://deploy.cloud.run/button.svg)](https://deploy.cloud.run?git_repo=https://github.com/ResultadosDigitais/matrix&revision=gcp-deploy-button)
 
 
 ## On Heroku
+
 If you prefer, you can run **#matrix** in Heroku: 
 
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/ResultadosDigitais/matrix)
 
 
-## Environments
+## Environment Variables
 
-The **#matrix** project has some environments that important to define.
+The **#matrix** project has some environment variables that important to define.
 
-1. We are using Google to authorizations, you need create a credential [here](https://developers.google.com/identity/sign-in/web/sign-in) and before define this:
+- We are using Google to authorizations, you need create a credential [here](https://developers.google.com/identity/sign-in/web/sign-in) and before define this variables:
 
-		GOOGLE_CREDENTIAL=${paste_your_credention_here}
+		GOOGLE_CLIENT_ID=${paste_your_client_id_here}
+		GOOGLE_SECRET={paste_your_secret_here}
+		GOOGLE_CALLBACK_URL=http://localhost:8080/auth/google/callback
 
-2. If you are running with ssl It's important to configure SSL, to define this:
+- You can change the secret and maximum age from session:
+
+		COOKIE_SESSION_SECRET=matrix-session
+		COOKIE_SESSION_MAX_AGE=2592000000
+
+- You can define a white List of trusted email domains can enter in the **#matrix**
+
+		WHITELIST_DOMAINS=["@domain1.com","@domain2.com"]
+
+- If you are running with ssl It's important to configure SSL, to define this:
 
 		ENFORCE_SSL=true
 
-3. The **#matrix** needs to know, where it get rooms definitions:
+- The **#matrix** needs to know, where it get rooms definitions:
 
 		ROOMS_SOURCE=ENVIRONMENT
 
-4. There is a config that define the rooms of The **#matrix**, if you prefer you can generate the unique id per room [here](https://www.uuidgenerator.net), to define this:
+- There is a config that define the rooms of The **#matrix**, If you want to customize your rooms or add and a new room, you have to configure a `ROOMS_SOURCE=ENVIRONMENT` and config `ROOMS_DATA` like the example:
 
 
 		ROOMS_DATA=[
@@ -119,30 +159,34 @@ GOOGLE_CREDENTIAL=XXXXXX.googleusercontent.com #Required to authenticate on matr
 ```
 
 ### External Meet
+
 The default video conferencing in meetings is [Jitsi](https://jitsi.org/jitsi-meet/), but you can change that in any room, using [Meet](https://meet.google.com/) or [Zoom](https://zoom.us/). For that, you just need provide the parameter `externalMeetUrl` in your room config:
-```
-ROOMS_DATA=[
+
+		ROOMS_DATA=[
 		   {
 		      "id":"${UUID}",
 		      "name":"Meeting External",
 			  "externalMeetUrl": "https://external-url-room/key-room"
 		   }
 		 ]
-```
-
-# Running in Production
-If you will run in production we strongly recomend to you close your environmen using an internal VPN. In this solution everybody with the link and a valid google credential can enter in your virtual office. Because of this is important to you mantain your environment closed. Or you can help us implementing to define a whitelist domains with environment variable. 
 
 
-# Contributing
+## Running in Production
+
+If you will run in production we strongly recommend you close your environment using an internal VPN. In this solution everybody with the link and a valid google credential can enter your virtual office. Because this is important for you to maintain your environment closed. Or you can define a variable `WHITELIST_DOMAINS` to limit only authorized users to enter in the **#matrix**. You have to choose a strong key to the `COOKIE_SESSION_SECRET` and have to put in `GOOGLE_CALLBACK_URL` your production domain.
+
+		WHITELIST_DOMAINS=["@domain1.com","@domain2.com"]
+
+
+## Contributing
+
 We encourage you to contribute to The **#matrix**!
 
 Everyone interacting in **#matrix** codebase, issue trackers, chat rooms, and mailing lists is expected to follow [code of conduct](docs/CODE_OF_CONDUCT.md).
 
 
 ## License
+
 The **#matrix** is released under the [MIT License](docs/LICENSE)
-
-
 
 `"The answer is out there, Neo, and it's looking for you, and it will find you if you want it to."`
